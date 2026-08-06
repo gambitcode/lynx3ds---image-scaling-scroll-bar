@@ -15,7 +15,7 @@ BasicInfo:
 
 TitleInfo:
   Category                : Application
-  UniqueId                : 0xff3ff # shared "sample" homebrew UniqueId; change if it collides with another installed CIA
+  UniqueId                : 0x30c1c # = 199708 = 1997/08, date of lynx manifesto
 
 Option:
   UseOnSD                 : true # true if App is to be installed to SD

@@ -199,7 +199,7 @@ cia: all
 	@echo building $(TARGET).cia ...
 	@tools/makerom -f cia -o $(TARGET).cia -rsf cia/template.rsf -target t -exefslogo \
 		-icon cia/build/icon.smdh -banner cia/build/banner.bnr -elf $(TARGET).elf \
-		-romfs cia/build/romfs.bin -major 2 -minor 0 -micro 0
+		-romfs cia/build/romfs.bin -major 2 -minor 0 -micro 1
 
 #---------------------------------------------------------------------------------
 else
