@@ -6,7 +6,7 @@ A beautiful text-mode web browser for the 3DS, ported from Lynx... With image su
 
 ## Install using FBI QR code:
 
-<img width="164" height="164" alt="image" src="https://github.com/user-attachments/assets/9d8ffce0-5528-41cd-9bbc-5fc520875707" />
+<img width="164" height="164" alt="image" src="https://github.com/user-attachments/assets/89310b45-7776-44df-94cd-24f4c9a2df0e" />
 
 ## Screenshots:
 
