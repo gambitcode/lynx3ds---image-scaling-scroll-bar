@@ -48,6 +48,29 @@ static unsigned short apply_alpha565(unsigned short color565, int alpha)
     return (unsigned short) (alpha_r[alpha][r] | alpha_g[alpha][g] | alpha_b[alpha][b]);
 }
 
+/*  adding a scroll bar */
+
+void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
+{
+    int bar_y = FONT_SCREEN_H - 4;
+    int fill_w;
+    int bar_w = FONT_SCREEN_W;
+
+    if (max_scroll_x <= 0) {
+        font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+        return;
+    }
+
+    fill_w = (bar_w * scroll_x) / max_scroll_x;
+    if (fill_w > bar_w)
+        fill_w = bar_w;
+
+    /* track */
+    font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+    /* filled portion */
+    font_fill_rect(0, bar_y, fill_w, FONT_SCREEN_H, 0xFFFF);
+}
+
 /* The 3DS top-screen raw framebuffer is stored rotated: each screen column
  * of FONT_SCREEN_H pixels is contiguous, with row 0 at the bottom. */
 static inline int fb_offset(int x, int y)
