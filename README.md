@@ -1,12 +1,10 @@
 # Lynx 3DS Modified
 
-A beautiful text-mode web browser for the 3DS, ported from Lynx... With image support!
 
-[Download Latest (cia / 3dsx)](https://github.com/PeterWarrington/lynx3ds/releases/latest)
 
-## Install using FBI QR code:
+## Install using FBI QR code: 
 
-<img width="164" height="164" alt="image" src="https://github.com/user-attachments/assets/89310b45-7776-44df-94cd-24f4c9a2df0e" />
+<img width="164" height="164" alt="image" src="https://github.com/user-attachments/assets/89310b45-7776-44df-94cd-24f4c9a2df0e](https://github.com/gambitcode/lynx3ds---image-scaling-scroll-bar/blob/ci/github-actions-build/lynx3ds-edit.jpg" />
 
 ## Screenshots:
 
@@ -26,4 +24,6 @@ A beautiful text-mode web browser for the 3DS, ported from Lynx... With image su
 ## AI Disclosure:
 
 Code was built with the assistance of CoPilot, ChatGPT, and Claude LLM. Everything else (Art, UI, and sound assets, etc) are my own (PeterWarrington, https://github.com/PeterWarrington), not AI. Lynx, and Open Sans are not mine.
+A beautiful text-mode web browser for the 3DS, ported from Lynx... With image support!
+[Download Latest (cia / 3dsx)](https://github.com/PeterWarrington/lynx3ds/releases/latest)
 > **Note:** This is a fork of [PeterWarrington/lynx3ds](https://github.com/PeterWarrington/lynx3ds). The original project is a beautiful text-mode web browser for the 3DS, ported from Lynx. This fork is a test branch for image scaling and adding a visible scroll bar.
