@@ -21,12 +21,11 @@ int font_char_width(unsigned char c);
 void font_draw_char(int x, int y, unsigned short color565, unsigned char c);
 
 /* Top-screen framebuffer helpers. */
+void font_fill_rect(int x0, int y0, int x1, int y1, unsigned short color565);
 void font_dim_screen(unsigned char amount);
 
-/* Bottom-screen framebuffer helpers. Same rectangle convention as the
- * top-screen versions: (x0, y0) is top-left, (x1, y1) is exclusive
- * bottom-right. */
-void font_fill_rect_bottom(int x0, int y0, int x1, int y1, unsigned short color565);
+/* Bottom-screen scrollbar, drawn with C2D primitives. Must be called
+ * between C2D_SceneBegin() and C3D_FrameEnd(). */
 void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x);
 
 #endif /* LYNX3DS_FONT_RENDER_H */
