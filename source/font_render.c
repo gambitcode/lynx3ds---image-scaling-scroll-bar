@@ -12,14 +12,13 @@
 #include "opensans_font_data.h"
 
 #include <3ds.h>
+#include <citro2d.h>
 
 #define GLYPH_W 8
 #define GLYPH_H 8
 #define MAX_ALPHA 255
 
-/* Bottom screen: 320 wide x 240 tall, stored in the same rotated
- * column-major layout as the top screen. Each column holds FB_BOTTOM_H
- * pixels, and there are FB_BOTTOM_W columns. */
+/* Bottom screen dimensions, used only for the C2D scrollbar below. */
 #define FB_BOTTOM_W 320
 #define FB_BOTTOM_H 240
 
@@ -59,12 +58,6 @@ static unsigned short apply_alpha565(unsigned short color565, int alpha)
 static inline int fb_offset(int x, int y)
 {
     return x * FONT_SCREEN_H + (FONT_SCREEN_H - 1 - y);
-}
-
-/* Same layout for the bottom screen, with its own dimensions. */
-static inline int fb_offset_bottom(int x, int y)
-{
-    return x * FB_BOTTOM_H + (FB_BOTTOM_H - 1 - y);
 }
 
 void font_draw_char(int x, int y, unsigned short color565, unsigned char c)
@@ -155,41 +148,33 @@ void font_fill_rect(int x0, int y0, int x1, int y1, unsigned short color565)
     }
 }
 
-/* Bottom-screen equivalent of font_fill_rect. Same rectangle convention:
- * (x0, y0) is the top-left, (x1, y1) is the exclusive bottom-right. */
-void font_fill_rect_bottom(int x0, int y0, int x1, int y1, unsigned short color565)
-{
-    unsigned short *fb = (unsigned short *) gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
-
-    if (x0 < 0)
-	x0 = 0;
-    if (y0 < 0)
-	y0 = 0;
-    if (x1 > FB_BOTTOM_W)
-	x1 = FB_BOTTOM_W;
-    if (y1 > FB_BOTTOM_H)
-	y1 = FB_BOTTOM_H;
-
-    for (int x = x0; x < x1; x++) {
-	for (int y = y0; y < y1; y++)
-	    fb[fb_offset_bottom(x, y)] = color565;
-    }
-}
-
 /* Draws a horizontal scrollbar along the bottom edge of the bottom screen.
+ *
+ * Must be called between C2D_SceneBegin() and C3D_FrameEnd(), i.e. in the
+ * same C2D frame as the background/guide images, so the draw commands are
+ * queued in order and this renders on top of them.
+ *
  * scroll_x is the current horizontal offset.
  * max_scroll_x is the maximum possible offset before the end of the document.
  * If max_scroll_x <= 0, the scrollbar is treated as fully filled.
  */
 void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
 {
-    int bar_y = FB_BOTTOM_H - 4;
-    int fill_w;
-    int bar_w = FB_BOTTOM_W;
+    const float screen_w = (float) FB_BOTTOM_W;
+    const float screen_h = (float) FB_BOTTOM_H;
+    const float bar_h = 4.0f;
+    const float bar_y = screen_h - bar_h;
+    const float z = 0.9f;
+
+    const u32 track_color = C2D_Color32(0x42, 0x42, 0x42, 0xFF);	/* dark grey */
+    const u32 thumb_color = C2D_Color32(0xFF, 0xFF, 0xFF, 0xFF);	/* white */
+
+    /* Track: always drawn full width. */
+    C2D_DrawRectSolid(0.0f, bar_y, z, screen_w, bar_h, track_color);
 
     if (max_scroll_x <= 0) {
-	/* Nothing to scroll -- show a fully filled bar. */
-	font_fill_rect_bottom(0, bar_y, bar_w, FB_BOTTOM_H, 0xFFFF);
+	/* Nothing to scroll -- fill the whole track with the thumb. */
+	C2D_DrawRectSolid(0.0f, bar_y, z + 0.1f, screen_w, bar_h, thumb_color);
 	return;
     }
 
@@ -199,12 +184,9 @@ void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
     if (scroll_x > max_scroll_x)
 	scroll_x = max_scroll_x;
 
-    fill_w = (bar_w * scroll_x) / max_scroll_x;
-    if (fill_w > bar_w)
-	fill_w = bar_w;
+    float fill_w = (screen_w * (float) scroll_x) / (float) max_scroll_x;
 
-    /* track */
-    font_fill_rect_bottom(0, bar_y, bar_w, FB_BOTTOM_H, 0x4210);
-    /* thumb */
-    font_fill_rect_bottom(0, bar_y, fill_w, FB_BOTTOM_H, 0xFFFF);
+    /* Thumb, on top of the track. */
+    if (fill_w > 0.0f)
+	C2D_DrawRectSolid(0.0f, bar_y, z + 0.1f, fill_w, bar_h, thumb_color);
 }
