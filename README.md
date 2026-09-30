@@ -26,3 +26,4 @@ A beautiful text-mode web browser for the 3DS, ported from Lynx... With image su
 ## AI Disclosure:
 
 Code was built with the assistance of CoPilot, ChatGPT, and Claude LLM. Everything else (Art, UI, and sound assets, etc) are my own (PeterWarrington, https://github.com/PeterWarrington), not AI. Lynx, and Open Sans are not mine.
+> **Note:** This is a fork of [PeterWarrington/lynx3ds](https://github.com/PeterWarrington/lynx3ds). The original project is a beautiful text-mode web browser for the 3DS, ported from Lynx. This fork is a test branch for image scaling and adding a visible scroll bar.
