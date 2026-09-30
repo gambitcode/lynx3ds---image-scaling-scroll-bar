@@ -20,26 +20,19 @@ jobs:
       - name: Install build dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y wget curl ca-certificates unzip xz-utils
+          sudo apt-get install -y build-essential git wget curl ca-certificates
 
-      - name: Install devkitARM
+      - name: Setup devkitPro repository
         run: |
-          mkdir -p /tmp/devkitpro
-          cd /tmp/devkitpro
+          wget https://apt.devkitpro.org/devkitpro-keyring.gpg -O /tmp/devkitpro-keyring.gpg
+          sudo apt-key add /tmp/devkitpro-keyring.gpg
+          echo "deb [signed-by=/tmp/devkitpro-keyring.gpg] https://apt.devkitpro.org stable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
+          sudo apt-get update
 
-          wget -q "https://github.com/devkitPro/installer/releases/download/v1.0.0/devkitpro-pacman.deb"
-          sudo dpkg -i devkitpro-pacman.deb
-
-          sudo dkp-pacman -Sy
-          sudo dkp-pacman -S --noconfirm devkitARM
-          sudo dkp-pacman -S --noconfirm 3ds-dev 3ds-libcurl 3ds-libjpeg-turbo 3ds-libpng 3ds-zlib
-
-      - name: Set environment variables
+      - name: Install devkitARM and 3DS libraries
         run: |
-          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
-          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
-          echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
-          echo "/opt/devkitpro/tools/bin" >> $GITHUB_PATH
+          sudo apt-get install -y devkitarm-devkitpro
+          sudo apt-get install -y 3ds-dev 3ds-libcurl 3ds-libjpeg-turbo 3ds-libpng 3ds-zlib
 
       - name: Build
         run: |
