@@ -10,29 +10,13 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: devkitpro/devkitarm:latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
-
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential git wget curl ca-certificates
-
-      - name: Setup devkitPro repository
-        run: |
-          wget https://apt.devkitpro.org/devkitpro-keyring.gpg -O /tmp/devkitpro-keyring.gpg
-          sudo apt-key add /tmp/devkitpro-keyring.gpg
-          echo "deb [signed-by=/tmp/devkitpro-keyring.gpg] https://apt.devkitpro.org stable main" | sudo tee /etc/apt/sources.list.d/devkitpro.list
-          sudo apt-get update
-
-      - name: Install devkitARM and 3DS libraries
-        run: |
-          sudo apt-get install -y devkitarm-devkitpro
-          sudo apt-get install -y 3ds-dev 3ds-libcurl 3ds-libjpeg-turbo 3ds-libpng 3ds-zlib
 
       - name: Build
         run: |
