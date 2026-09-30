@@ -12,18 +12,35 @@ jobs:
     runs-on: ubuntu-latest
     container: devkitpro/devkitarm:latest
 
+    env:
+      DEVKITPRO: /opt/devkitpro
+      DEVKITARM: /opt/devkitpro/devkitARM
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           submodules: recursive
+          fetch-depth: 0
+
+      - name: Clean
+        run: |
+          make clean || true
+          # devkitPro's Makefile does not reliably delete the SMDH, so the
+          # metadata (title, description, icon) never regenerates unless we
+          # remove it by hand. This is why APP_TITLE changes seem to be
+          # ignored.
+          rm -f lynx3ds.smdh
+          rm -f *.smdh
 
       - name: Build
+        run: make
+
+      - name: Verify SMDH was regenerated
         run: |
-          export DEVKITPRO=/opt/devkitpro
-          export DEVKITARM=/opt/devkitpro/devkitARM
-          make clean || true
-          make
+          ls -la lynx3ds.smdh
+          echo "---- SMDH strings ----"
+          strings lynx3ds.smdh | head -20
 
       - name: Upload build artifact
         uses: actions/upload-artifact@v4
@@ -33,3 +50,4 @@ jobs:
             lynx3ds.3dsx
             lynx3ds.elf
             lynx3ds.smdh
+          if-no-files-found: error
