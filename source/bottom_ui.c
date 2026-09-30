@@ -14,6 +14,7 @@
 #include <bottom_ui.h>
 #include <bookmarks.h>
 #include <image_preview.h>
+#include <font_render.h>
 #include <citro2d.h>
 #include <math.h>
 
@@ -31,6 +32,10 @@ static bool ready = false;
 static u64 start_ms;
 static Thread render_thread;
 
+/* Extern declarations for scroll position from Lynx */
+extern int LY3DS_scroll_x(void);
+extern int LY3DS_max_scroll_x(void);
+
 void bottom_ui_draw_content(float alpha_mul)
 {
     double elapsed = (double) (osGetTime() - start_ms);
@@ -43,6 +48,11 @@ void bottom_ui_draw_content(float alpha_mul)
     C2D_AlphaImageTint(&fg_tint, fg_alpha);
     C2D_DrawImageAt(img_bg, 0, 0, 0, &bg_tint, 1.0f, 1.0f);
     C2D_DrawImageAt(img_fg, 0, 0, 0.5f, &fg_tint, 1.0f, 1.0f);
+    
+    /* Draw scrollbar at bottom of top screen showing horizontal page scroll position */
+    int scroll_x = LY3DS_scroll_x();
+    int max_scroll = LY3DS_max_scroll_x();
+    font_draw_scrollbar_bottom(scroll_x, max_scroll);
 }
 
 static void bottom_ui_render_once(void)
