@@ -17,21 +17,8 @@ jobs:
         with:
           submodules: recursive
 
-      - name: Install devkitPro
-        run: |
-          wget https://github.com/devkitPro/pacman/releases/download/devkitpro-pacman-1.0.2/devkitpro-pacman.amd64.deb
-          sudo dpkg -i devkitpro-pacman.amd64.deb
-          sudo dkp-pacman -Sy
-          sudo dkp-pacman -S devkitARM --noconfirm
-          sudo dkp-pacman -S 3ds-dev --noconfirm
-          sudo dkp-pacman -S 3ds-libcurl 3ds-libjpeg-turbo 3ds-libpng 3ds-zlib --noconfirm
-
-      - name: Set environment variables
-        run: |
-          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
-          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
-          echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
-          echo "/opt/devkitpro/tools/bin" >> $GITHUB_PATH
+      - name: Setup devkitPro
+        uses: devkitPro/github-action@master
 
       - name: Build 3DS app
         run: |
