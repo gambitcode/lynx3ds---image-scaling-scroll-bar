@@ -35,22 +35,22 @@
 #include <math.h>
 #include <setjmp.h>
 
-extern const char *LY3DS_current_link_url(void);	/* vendor/lynx/src/LYMainLoop.c */
+extern const char *LY3DS_current_link_url(void); /* vendor/lynx/src/LYMainLoop.c */
 
 #define BOTTOM_W 320
 #define BOTTOM_H 240
 #define BOX_W 300.0f
 #define BOX_H 200.0f
 
-#define WORKER_STACK_SIZE (64 * 1024)	/* curl+mbedtls+libpng/libjpeg call chains run deep */
-#define WORKER_PRIORITY 0x31		/* slightly below bottom_ui's render thread (0x30) */
+#define WORKER_STACK_SIZE (64 * 1024) /* curl+mbedtls+libpng/libjpeg call chains run deep */
+#define WORKER_PRIORITY 0x31 /* slightly below bottom_ui's render thread (0x30) */
 #define POLL_INTERVAL_NS (150ULL * 1000 * 1000)
 
-#define MAX_FETCH_BYTES (6 * 1024 * 1024)	/* cap raw (compressed) download size */
-#define MAX_IMAGE_DIM 512	/* cap decoded pixel dimensions -- also keeps the po2 texture small */
+#define MAX_FETCH_BYTES (6 * 1024 * 1024) /* cap raw (compressed) download size */
+#define MAX_IMAGE_DIM 512 /* cap decoded pixel dimensions -- also keeps the po2 texture small */
 
-#define FADE_MS 350.0		/* guide<->image cross-fade duration */
-#define INDICATOR_FADE_MS 200.0	/* loading indicator's own show/hide fade */
+#define FADE_MS 350.0 /* guide<->image cross-fade duration */
+#define INDICATOR_FADE_MS 200.0 /* loading indicator's own show/hide fade */
 #define SPINNER_TICKS 8
 #define SPINNER_PERIOD_MS 900.0
 #define SPINNER_R_OUT 16.0f
@@ -58,17 +58,17 @@ extern const char *LY3DS_current_link_url(void);	/* vendor/lynx/src/LYMainLoop.c
 
 typedef enum {
     PREVIEW_IDLE = 0,
-    PREVIEW_LOADING,	/* worker fetching/decoding -- show guide + spinner */
-    PREVIEW_FADING_IN,	/* texture just uploaded -- cross-fading guide out, image in */
-    PREVIEW_READY,	/* fade complete -- image only */
-    PREVIEW_FADING_OUT	/* un-hovered -- cross-fading image out, guide back in */
+    PREVIEW_LOADING, /* worker fetching/decoding -- show guide + spinner */
+    PREVIEW_FADING_IN, /* texture just uploaded -- cross-fading guide out, image in */
+    PREVIEW_READY, /* fade complete -- image only */
+    PREVIEW_FADING_OUT /* un-hovered -- cross-fading image out, guide back in */
 } preview_state_t;
 
 static Thread g_thread;
 static volatile int g_running = 0;
 static volatile preview_state_t g_state = PREVIEW_IDLE;
-static u64 g_start_ms;		/* for the spinner's animation clock */
-static u64 g_fade_start_ms;	/* render-thread-owned: when the current guide<->image cross-fade began */
+static u64 g_start_ms; /* for the spinner's animation clock */
+static u64 g_fade_start_ms; /* render-thread-owned: when the current guide<->image cross-fade began */
 
 /* A simple "smoothly approach a target value over a duration" helper --
  * used for the loading indicator's own fade, which needs to keep animating
@@ -112,11 +112,11 @@ static fade_t g_indicator_fade = { 0.0f, 0.0f, 0, INDICATOR_FADE_MS };
 /* Worker thread -> render thread handoff. Single writer (worker) / single
  * reader (render thread), same lock-free-flag style already used by
  * bookmarks.c and bottom_ui.c elsewhere in this project. */
-static unsigned char *g_pending_pixels = NULL;	/* plain malloc'd, row-major RGBA8, w*h*4 bytes */
+static unsigned char *g_pending_pixels = NULL; /* plain malloc'd, row-major RGBA8, w*h*4 bytes */
 static int g_pending_w = 0, g_pending_h = 0;
 static volatile int g_pending_ready = 0;
-static volatile int g_pending_clear = 0;	/* hard/immediate clear (fetch or decode failed) */
-static volatile int g_pending_fade_out = 0;	/* un-hovered -- fade out gracefully if something's showing */
+static volatile int g_pending_clear = 0; /* hard/immediate clear (fetch or decode failed) */
+static volatile int g_pending_fade_out = 0; /* un-hovered -- fade out gracefully if something's showing */
 
 /* Render-thread-owned GPU state -- touched only from image_preview_render_bottom(). */
 static C3D_Tex g_tex;
@@ -184,7 +184,7 @@ static size_t write_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
     size_t newcap;
 
     if (mb->len + n > MAX_FETCH_BYTES)
-	return 0;	/* abort transfer -- too large */
+	return 0; /* abort transfer -- too large */
     if (mb->len + n > mb->cap) {
 	newcap = mb->cap ? mb->cap * 2 : 65536;
 	while (newcap < mb->len + n)
@@ -307,7 +307,7 @@ static unsigned char *decode_jpeg(const unsigned char *data, size_t len, int *w,
     jpeg_create_decompress(&cinfo);
     jpeg_mem_src(&cinfo, data, (unsigned long) len);
     jpeg_read_header(&cinfo, TRUE);
-    cinfo.out_color_space = JCS_EXT_ABGR;	/* see decode_png()'s comment on GPU_RGBA8's actual byte order */
+    cinfo.out_color_space = JCS_EXT_ABGR; /* see decode_png()'s comment on GPU_RGBA8's actual byte order */
     jpeg_start_decompress(&cinfo);
 
     row_stride = (int) cinfo.output_width * cinfo.output_components;
@@ -430,7 +430,7 @@ int image_preview_is_active(void)
 
 static int next_po2(int v)
 {
-    int p = 8;	/* minimum sane size; also keeps GX transfer dims a multiple of 8 */
+    int p = 8; /* minimum sane size; also keeps GX transfer dims a multiple of 8 */
 
     while (p < v)
 	p *= 2;
@@ -541,4 +541,134 @@ static void draw_spinner(int cx, int cy, float alpha)
 {
     double elapsed = (double) (osGetTime() - g_start_ms);
     float phase = (float) fmod(elapsed, SPINNER_PERIOD_MS) / (float) SPINNER_PERIOD_MS;
-    int head = (int) (phase * SPINNER_T
+    int head = (int) (phase * SPINNER_TICKS);
+    int i;
+
+    for (i = 0; i < SPINNER_TICKS; i++) {
+	float ang = (float) i / SPINNER_TICKS * 2.0f * (float) M_PI - (float) M_PI / 2.0f;
+	int back = (head - i + SPINNER_TICKS) % SPINNER_TICKS;
+	float bright = 1.0f - (float) back / SPINNER_TICKS;
+	u8 v = (u8) (60 + bright * 195);
+	u8 a = (u8) (255 * alpha);
+	u32 color = C2D_Color32(v, v, v, a);
+	float x0 = cx + cosf(ang) * SPINNER_R_IN;
+	float y0 = cy + sinf(ang) * SPINNER_R_IN;
+	float x1 = cx + cosf(ang) * SPINNER_R_OUT;
+	float y1 = cy + sinf(ang) * SPINNER_R_OUT;
+
+	C2D_DrawLine(x0, y0, color, x1, y1, color, 3.0f, 0.6f);
+    }
+}
+
+static void draw_loading_indicator(float alpha)
+{
+    int cx = BOTTOM_W / 2;
+    int cy = BOTTOM_H / 2 - 14;
+
+    /* Dark backing so the spinner/text stay legible over whatever the
+     * guide graphic happens to show underneath. */
+    C2D_DrawRectSolid(cx - 80, cy - 34, 0.55f, 160, 68, C2D_Color32(0x00, 0x00, 0x00, (u8) (0x90 * alpha)));
+    draw_spinner(cx, cy, alpha);
+    draw_label(cx - 52, cy + 20, "Loading image...", C2D_Color32(0xe0, 0xe0, 0xe0, (u8) (255 * alpha)));
+}
+
+void image_preview_render_bottom(C3D_RenderTarget *target)
+{
+    static preview_state_t prev_state = PREVIEW_IDLE;
+
+    if (!g_text_buf)
+	g_text_buf = C2D_TextBufNew(256);
+
+    if (g_pending_fade_out) {
+	g_pending_fade_out = 0;
+	if (g_tex_valid && (g_state == PREVIEW_FADING_IN || g_state == PREVIEW_READY)) {
+	    /* Something's actually showing -- cross-fade it back out to the
+	     * guide instead of cutting away abruptly. */
+	    g_fade_start_ms = osGetTime();
+	    g_state = PREVIEW_FADING_OUT;
+	} else {
+	    /* Nothing to fade from (still loading, no texture yet) --
+	     * the loading indicator's own fade-out (below) covers this. */
+	    if (g_tex_valid) {
+		C3D_TexDelete(&g_tex);
+		g_tex_valid = 0;
+	    }
+	    g_state = PREVIEW_IDLE;
+	}
+    }
+    if (g_pending_clear) {
+	if (g_tex_valid) {
+	    C3D_TexDelete(&g_tex);
+	    g_tex_valid = 0;
+	}
+	g_pending_clear = 0;
+	g_state = PREVIEW_IDLE;
+    }
+    if (g_pending_ready) {
+	upload_pending();
+	g_pending_ready = 0;
+	if (g_tex_valid) {
+	    g_fade_start_ms = osGetTime();
+	    g_state = PREVIEW_FADING_IN;
+	}
+    }
+
+    /* The loading indicator fades independently of the guide<->image
+     * cross-fade above -- it can still be finishing its own fade-out even
+     * after g_state has already moved on (e.g. straight back to idle, if
+     * there was never an image to cross-fade against). Comparing against
+     * the state as of last frame catches entering *and* leaving LOADING
+     * regardless of which of the branches above caused it. */
+    if (g_state == PREVIEW_LOADING && prev_state != PREVIEW_LOADING)
+	fade_to(&g_indicator_fade, 1.0f, INDICATOR_FADE_MS);
+    else if (g_state != PREVIEW_LOADING && prev_state == PREVIEW_LOADING)
+	fade_to(&g_indicator_fade, 0.0f, INDICATOR_FADE_MS);
+    prev_state = g_state;
+
+    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
+    C2D_TargetClear(target, C2D_Color32(0x10, 0x10, 0x14, 0xff));
+    C2D_SceneBegin(target);
+
+    if (g_state == PREVIEW_FADING_IN && g_tex_valid) {
+	double elapsed = (double) (osGetTime() - g_fade_start_ms);
+	float t = (float) (elapsed / FADE_MS);
+
+	if (t >= 1.0f) {
+	    t = 1.0f;
+	    g_state = PREVIEW_READY;
+	}
+	bottom_ui_draw_content(1.0f - t);
+	draw_image(t);
+    } else if (g_state == PREVIEW_READY && g_tex_valid) {
+	draw_image(1.0f);
+    } else if (g_state == PREVIEW_FADING_OUT && g_tex_valid) {
+	double elapsed = (double) (osGetTime() - g_fade_start_ms);
+	float t = (float) (elapsed / FADE_MS);
+	int done = (t >= 1.0f);
+
+	if (done)
+	    t = 1.0f;
+	bottom_ui_draw_content(t);
+	if (t < 1.0f)
+	    draw_image(1.0f - t);
+	if (done) {
+	    C3D_TexDelete(&g_tex);
+	    g_tex_valid = 0;
+	    g_state = PREVIEW_IDLE;
+	}
+    } else {
+	/* PREVIEW_LOADING, or a texture upload hasn't landed yet -- keep
+	 * showing the normal guide underneath so the bottom screen never
+	 * just goes blank while waiting. */
+	bottom_ui_draw_content(1.0f);
+    }
+
+    {
+	float ind_alpha = fade_eval(&g_indicator_fade);
+
+	if (ind_alpha > 0.005f)
+	    draw_loading_indicator(ind_alpha);
+    }
+
+    C3D_FrameEnd(0);
+}
