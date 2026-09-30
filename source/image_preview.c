@@ -504,9 +504,10 @@ static void draw_label(int x, int y, const char *s, u32 color)
     C2D_DrawText(&text, C2D_WithColor, (float) x, (float) y, 0.5f, 0.5f, 0.5f, color);
 }
 
-/* Draws the loaded image, scaled to fit within BOX_W x BOX_H (never
- * upscaled, so small icons don't come out blurry) and centered, at the
- * given opacity -- alpha < 1 during the guide-out/image-in cross-fade. */
+/* Draws the loaded image, scaled to fill as much of the bottom screen as
+ * possible while preserving the source aspect ratio, centered on-screen.
+ * alpha < 1 during the guide-out/image-in cross-fade.
+ */
 static void draw_image(float alpha)
 {
     float scale;
@@ -515,10 +516,9 @@ static void draw_image(float alpha)
     C2D_ImageTint *tintp = NULL;
 
     if (g_img_w <= 0 || g_img_h <= 0)
-        return;
+	return;
 
-    /* Fill as much of the bottom screen as possible, while keeping the
-     * original aspect ratio. This removes the old "never upscale" cap. */
+    /* Fill the panel as much as possible without distorting the image. */
     scale = fminf(BOTTOM_W / (float) g_img_w, BOTTOM_H / (float) g_img_h);
 
     draw_w = g_img_w * scale;
@@ -527,8 +527,8 @@ static void draw_image(float alpha)
     y = (BOTTOM_H - draw_h) / 2.0f;
 
     if (alpha < 1.0f) {
-        C2D_AlphaImageTint(&tint, alpha);
-        tintp = &tint;
+	C2D_AlphaImageTint(&tint, alpha);
+	tintp = &tint;
     }
 
     C2D_DrawImageAt(g_image, x, y, 0.5f, tintp, scale, scale);
@@ -541,134 +541,4 @@ static void draw_spinner(int cx, int cy, float alpha)
 {
     double elapsed = (double) (osGetTime() - g_start_ms);
     float phase = (float) fmod(elapsed, SPINNER_PERIOD_MS) / (float) SPINNER_PERIOD_MS;
-    int head = (int) (phase * SPINNER_TICKS);
-    int i;
-
-    for (i = 0; i < SPINNER_TICKS; i++) {
-	float ang = (float) i / SPINNER_TICKS * 2.0f * (float) M_PI - (float) M_PI / 2.0f;
-	int back = (head - i + SPINNER_TICKS) % SPINNER_TICKS;
-	float bright = 1.0f - (float) back / SPINNER_TICKS;
-	u8 v = (u8) (60 + bright * 195);
-	u8 a = (u8) (255 * alpha);
-	u32 color = C2D_Color32(v, v, v, a);
-	float x0 = cx + cosf(ang) * SPINNER_R_IN;
-	float y0 = cy + sinf(ang) * SPINNER_R_IN;
-	float x1 = cx + cosf(ang) * SPINNER_R_OUT;
-	float y1 = cy + sinf(ang) * SPINNER_R_OUT;
-
-	C2D_DrawLine(x0, y0, color, x1, y1, color, 3.0f, 0.6f);
-    }
-}
-
-static void draw_loading_indicator(float alpha)
-{
-    int cx = BOTTOM_W / 2;
-    int cy = BOTTOM_H / 2 - 14;
-
-    /* Dark backing so the spinner/text stay legible over whatever the
-     * guide graphic happens to show underneath. */
-    C2D_DrawRectSolid(cx - 80, cy - 34, 0.55f, 160, 68, C2D_Color32(0x00, 0x00, 0x00, (u8) (0x90 * alpha)));
-    draw_spinner(cx, cy, alpha);
-    draw_label(cx - 52, cy + 20, "Loading image...", C2D_Color32(0xe0, 0xe0, 0xe0, (u8) (255 * alpha)));
-}
-
-void image_preview_render_bottom(C3D_RenderTarget *target)
-{
-    static preview_state_t prev_state = PREVIEW_IDLE;
-
-    if (!g_text_buf)
-	g_text_buf = C2D_TextBufNew(256);
-
-    if (g_pending_fade_out) {
-	g_pending_fade_out = 0;
-	if (g_tex_valid && (g_state == PREVIEW_FADING_IN || g_state == PREVIEW_READY)) {
-	    /* Something's actually showing -- cross-fade it back out to the
-	     * guide instead of cutting away abruptly. */
-	    g_fade_start_ms = osGetTime();
-	    g_state = PREVIEW_FADING_OUT;
-	} else {
-	    /* Nothing to fade from (still loading, no texture yet) --
-	     * the loading indicator's own fade-out (below) covers this. */
-	    if (g_tex_valid) {
-		C3D_TexDelete(&g_tex);
-		g_tex_valid = 0;
-	    }
-	    g_state = PREVIEW_IDLE;
-	}
-    }
-    if (g_pending_clear) {
-	if (g_tex_valid) {
-	    C3D_TexDelete(&g_tex);
-	    g_tex_valid = 0;
-	}
-	g_pending_clear = 0;
-	g_state = PREVIEW_IDLE;
-    }
-    if (g_pending_ready) {
-	upload_pending();
-	g_pending_ready = 0;
-	if (g_tex_valid) {
-	    g_fade_start_ms = osGetTime();
-	    g_state = PREVIEW_FADING_IN;
-	}
-    }
-
-    /* The loading indicator fades independently of the guide<->image
-     * cross-fade above -- it can still be finishing its own fade-out even
-     * after g_state has already moved on (e.g. straight back to idle, if
-     * there was never an image to cross-fade against). Comparing against
-     * the state as of last frame catches entering *and* leaving LOADING
-     * regardless of which of the branches above caused it. */
-    if (g_state == PREVIEW_LOADING && prev_state != PREVIEW_LOADING)
-	fade_to(&g_indicator_fade, 1.0f, INDICATOR_FADE_MS);
-    else if (g_state != PREVIEW_LOADING && prev_state == PREVIEW_LOADING)
-	fade_to(&g_indicator_fade, 0.0f, INDICATOR_FADE_MS);
-    prev_state = g_state;
-
-    C3D_FrameBegin(C3D_FRAME_SYNCDRAW);
-    C2D_TargetClear(target, C2D_Color32(0x10, 0x10, 0x14, 0xff));
-    C2D_SceneBegin(target);
-
-    if (g_state == PREVIEW_FADING_IN && g_tex_valid) {
-	double elapsed = (double) (osGetTime() - g_fade_start_ms);
-	float t = (float) (elapsed / FADE_MS);
-
-	if (t >= 1.0f) {
-	    t = 1.0f;
-	    g_state = PREVIEW_READY;
-	}
-	bottom_ui_draw_content(1.0f - t);
-	draw_image(t);
-    } else if (g_state == PREVIEW_READY && g_tex_valid) {
-	draw_image(1.0f);
-    } else if (g_state == PREVIEW_FADING_OUT && g_tex_valid) {
-	double elapsed = (double) (osGetTime() - g_fade_start_ms);
-	float t = (float) (elapsed / FADE_MS);
-	int done = (t >= 1.0f);
-
-	if (done)
-	    t = 1.0f;
-	bottom_ui_draw_content(t);
-	if (t < 1.0f)
-	    draw_image(1.0f - t);
-	if (done) {
-	    C3D_TexDelete(&g_tex);
-	    g_tex_valid = 0;
-	    g_state = PREVIEW_IDLE;
-	}
-    } else {
-	/* PREVIEW_LOADING, or a texture upload hasn't landed yet -- keep
-	 * showing the normal guide underneath so the bottom screen never
-	 * just goes blank while waiting. */
-	bottom_ui_draw_content(1.0f);
-    }
-
-    {
-	float ind_alpha = fade_eval(&g_indicator_fade);
-
-	if (ind_alpha > 0.005f)
-	    draw_loading_indicator(ind_alpha);
-    }
-
-    C3D_FrameEnd(0);
-}
+    int head = (int) (phase * SPINNER_T
