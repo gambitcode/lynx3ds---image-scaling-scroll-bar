@@ -53,9 +53,6 @@ void bottom_ui_draw_content(float alpha_mul)
     C2D_AlphaImageTint(&fg_tint, fg_alpha);
     C2D_DrawImageAt(img_bg, 0, 0, 0, &bg_tint, 1.0f, 1.0f);
     C2D_DrawImageAt(img_fg, 0, 0, 0.5f, &fg_tint, 1.0f, 1.0f);
-
-    /* Horizontal scrollbar overlaid on the content. */
-    font_draw_scrollbar_bottom(LY3DS_scroll_x, LY3DS_max_scroll_x);
 }
 
 static void bottom_ui_render_once(void)
@@ -64,6 +61,10 @@ static void bottom_ui_render_once(void)
     C2D_TargetClear(bottom_target, C2D_Color32(0, 0, 0, 255));
     C2D_SceneBegin(bottom_target);
     bottom_ui_draw_content(1.0f);
+    /* Drawn last, still inside the C2D scene, so its draw command is
+     * queued after the background and guide images and therefore renders
+     * on top of them once C3D_FrameEnd submits the frame. */
+    font_draw_scrollbar_bottom(LY3DS_scroll_x, LY3DS_max_scroll_x);
     C3D_FrameEnd(0);
 }
 
