@@ -1,1 +1,55 @@
-test
+name: Build 3DS app
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - ci/github-actions-build
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            build-essential \
+            git \
+            curl \
+            wget \
+            cmake \
+            python3 \
+            ca-certificates
+          git clone --depth=1 https://github.com/devkitPro/buildscripts.git /tmp/devkitpro-buildscripts
+          bash /tmp/devkitpro-buildscripts/ubuntu/install.sh
+
+      - name: Set up devkitARM
+        shell: bash
+        run: |
+          echo "DEVKITPRO=/opt/devkitpro" >> $GITHUB_ENV
+          echo "DEVKITARM=/opt/devkitpro/devkitARM" >> $GITHUB_ENV
+          echo "/opt/devkitpro/devkitARM/bin" >> $GITHUB_PATH
+          echo "/opt/devkitpro/tools/bin" >> $GITHUB_PATH
+
+      - name: Build 3DS app
+        shell: bash
+        run: |
+          export DEVKITPRO=/opt/devkitpro
+          export DEVKITARM=/opt/devkitpro/devkitARM
+          make clean || true
+          make
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lynx3ds-build
+          path: |
+            lynx3ds.3dsx
+            lynx3ds.elf
+            lynx3ds.smdh
