@@ -118,3 +118,53 @@ void font_dim_screen(unsigned char amount)
 {
     unsigned short *fb = (unsigned short *) gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
     int keep = 255 - amount;
+    int i;
+
+    for (i = 0; i < FONT_SCREEN_W * FONT_SCREEN_H; i++)
+	fb[i] = apply_alpha565(fb[i], keep);
+}
+
+void font_fill_rect(int x0, int y0, int x1, int y1, unsigned short color565)
+{
+    unsigned short *fb = (unsigned short *) gfxGetFramebuffer(GFX_TOP, GFX_LEFT, NULL, NULL);
+
+    if (x0 < 0)
+	x0 = 0;
+    if (y0 < 0)
+	y0 = 0;
+    if (x1 > FONT_SCREEN_W)
+	x1 = FONT_SCREEN_W;
+    if (y1 > FONT_SCREEN_H)
+	y1 = FONT_SCREEN_H;
+
+    for (int x = x0; x < x1; x++) {
+	for (int y = y0; y < y1; y++)
+	    fb[fb_offset(x, y)] = color565;
+    }
+}
+
+/* Draws a horizontal scrollbar along the bottom of the top screen.
+ * scroll_x is the current horizontal offset.
+ * max_scroll_x is the maximum possible offset before the end of the document.
+ * If max_scroll_x <= 0, the scrollbar is treated as fully filled.
+ */
+void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
+{
+    int bar_y = FONT_SCREEN_H - 4;
+    int fill_w;
+    int bar_w = FONT_SCREEN_W;
+
+    if (max_scroll_x <= 0) {
+	font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+	return;
+    }
+
+    fill_w = (bar_w * scroll_x) / max_scroll_x;
+    if (fill_w > bar_w)
+	fill_w = bar_w;
+
+    /* track */
+    font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+    /* thumb */
+    font_fill_rect(0, bar_y, fill_w, FONT_SCREEN_H, 0xFFFF);
+}
