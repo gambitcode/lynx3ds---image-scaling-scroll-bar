@@ -36,9 +36,9 @@ EXCLUDE_C := Xsystem.c mktime.c strstr.c wcwidth.c tidy_tls.c makeuctb.c \
 # optional -- if unset it falls back to TARGET.png/icon.png if present, or a
 # default devkitPro icon otherwise.
 #---------------------------------------------------------------------------------
-APP_TITLE       := Lynx 3DS
-APP_DESCRIPTION := Lynx 3DS - beautiful text-mode browser
-APP_AUTHOR      := lilpete.me/lynx3ds
+APP_TITLE       := Lynx 3DS Modified
+APP_DESCRIPTION := Lynx 3DS - modified for scroll & images
+APP_AUTHOR      := https://github.com/gambitcode
 
 #---------------------------------------------------------------------------------
 ARCH	:=	-march=armv6k -mtune=mpcore -mfloat-abi=hard -mtp=soft
