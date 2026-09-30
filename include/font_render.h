@@ -21,7 +21,6 @@ int font_char_width(unsigned char c);
 void font_draw_char(int x, int y, unsigned short color565, unsigned char c);
 
 /* Top-screen framebuffer helpers. */
-void font_fill_rect(int x0, int y0, int x1, int y1, unsigned short color565);
 void font_dim_screen(unsigned char amount);
 
 /* Bottom-screen framebuffer helpers. Same rectangle convention as the
