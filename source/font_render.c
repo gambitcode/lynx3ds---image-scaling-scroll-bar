@@ -155,9 +155,16 @@ void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
     int bar_w = FONT_SCREEN_W;
 
     if (max_scroll_x <= 0) {
-	font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+	/* Nothing to scroll -- show a fully filled bar. */
+	font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0xFFFF);
 	return;
     }
+
+    /* Clamp scroll offset so the thumb can never go negative or overshoot. */
+    if (scroll_x < 0)
+	scroll_x = 0;
+    if (scroll_x > max_scroll_x)
+	scroll_x = max_scroll_x;
 
     fill_w = (bar_w * scroll_x) / max_scroll_x;
     if (fill_w > bar_w)
