@@ -4,7 +4,7 @@
 
 ## Install using FBI QR code: 
 
-<img width="164" height="164" alt="image" src="https://raw.githubusercontent.com/gambitcode/lynx3ds---image-scaling-scroll-bar/ci/github-actions-build/lynx3ds-edit.jpg" />
+<img width="164" height="164" src="https://raw.githubusercontent.com/gambitcode/lynx3ds---image-scaling-scroll-bar/ci/github-actions-build/lynx3ds-edit.jpg" />
 
 ## Screenshots:
 
