@@ -509,21 +509,28 @@ static void draw_label(int x, int y, const char *s, u32 color)
  * given opacity -- alpha < 1 during the guide-out/image-in cross-fade. */
 static void draw_image(float alpha)
 {
-    float scale = fminf(BOX_W / (float) g_img_w, BOX_H / (float) g_img_h);
+    float scale;
     float draw_w, draw_h, x, y;
     C2D_ImageTint tint;
     C2D_ImageTint *tintp = NULL;
 
-    if (scale > 1.0f)
-	scale = 1.0f;
+    if (g_img_w <= 0 || g_img_h <= 0)
+        return;
+
+    /* Fill as much of the bottom screen as possible, while keeping the
+     * original aspect ratio. This removes the old "never upscale" cap. */
+    scale = fminf(BOTTOM_W / (float) g_img_w, BOTTOM_H / (float) g_img_h);
+
     draw_w = g_img_w * scale;
     draw_h = g_img_h * scale;
     x = (BOTTOM_W - draw_w) / 2.0f;
     y = (BOTTOM_H - draw_h) / 2.0f;
+
     if (alpha < 1.0f) {
-	C2D_AlphaImageTint(&tint, alpha);
-	tintp = &tint;
+        C2D_AlphaImageTint(&tint, alpha);
+        tintp = &tint;
     }
+
     C2D_DrawImageAt(g_image, x, y, 0.5f, tintp, scale, scale);
 }
 
