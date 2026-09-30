@@ -17,6 +17,12 @@
 #define GLYPH_H 8
 #define MAX_ALPHA 255
 
+/* Bottom screen: 320 wide x 240 tall, stored in the same rotated
+ * column-major layout as the top screen. Each column holds FB_BOTTOM_H
+ * pixels, and there are FB_BOTTOM_W columns. */
+#define FB_BOTTOM_W 320
+#define FB_BOTTOM_H 240
+
 static int alpha_r[MAX_ALPHA + 1][32];
 static int alpha_g[MAX_ALPHA + 1][32];
 static int alpha_b[MAX_ALPHA + 1][32];
@@ -53,6 +59,12 @@ static unsigned short apply_alpha565(unsigned short color565, int alpha)
 static inline int fb_offset(int x, int y)
 {
     return x * FONT_SCREEN_H + (FONT_SCREEN_H - 1 - y);
+}
+
+/* Same layout for the bottom screen, with its own dimensions. */
+static inline int fb_offset_bottom(int x, int y)
+{
+    return x * FB_BOTTOM_H + (FB_BOTTOM_H - 1 - y);
 }
 
 void font_draw_char(int x, int y, unsigned short color565, unsigned char c)
@@ -143,20 +155,41 @@ void font_fill_rect(int x0, int y0, int x1, int y1, unsigned short color565)
     }
 }
 
-/* Draws a horizontal scrollbar along the bottom of the top screen.
+/* Bottom-screen equivalent of font_fill_rect. Same rectangle convention:
+ * (x0, y0) is the top-left, (x1, y1) is the exclusive bottom-right. */
+void font_fill_rect_bottom(int x0, int y0, int x1, int y1, unsigned short color565)
+{
+    unsigned short *fb = (unsigned short *) gfxGetFramebuffer(GFX_BOTTOM, GFX_LEFT, NULL, NULL);
+
+    if (x0 < 0)
+	x0 = 0;
+    if (y0 < 0)
+	y0 = 0;
+    if (x1 > FB_BOTTOM_W)
+	x1 = FB_BOTTOM_W;
+    if (y1 > FB_BOTTOM_H)
+	y1 = FB_BOTTOM_H;
+
+    for (int x = x0; x < x1; x++) {
+	for (int y = y0; y < y1; y++)
+	    fb[fb_offset_bottom(x, y)] = color565;
+    }
+}
+
+/* Draws a horizontal scrollbar along the bottom edge of the bottom screen.
  * scroll_x is the current horizontal offset.
  * max_scroll_x is the maximum possible offset before the end of the document.
  * If max_scroll_x <= 0, the scrollbar is treated as fully filled.
  */
 void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
 {
-    int bar_y = FONT_SCREEN_H - 4;
+    int bar_y = FB_BOTTOM_H - 4;
     int fill_w;
-    int bar_w = FONT_SCREEN_W;
+    int bar_w = FB_BOTTOM_W;
 
     if (max_scroll_x <= 0) {
 	/* Nothing to scroll -- show a fully filled bar. */
-	font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0xFFFF);
+	font_fill_rect_bottom(0, bar_y, bar_w, FB_BOTTOM_H, 0xFFFF);
 	return;
     }
 
@@ -171,7 +204,7 @@ void font_draw_scrollbar_bottom(int scroll_x, int max_scroll_x)
 	fill_w = bar_w;
 
     /* track */
-    font_fill_rect(0, bar_y, bar_w, FONT_SCREEN_H, 0x4210);
+    font_fill_rect_bottom(0, bar_y, bar_w, FB_BOTTOM_H, 0x4210);
     /* thumb */
-    font_fill_rect(0, bar_y, fill_w, FONT_SCREEN_H, 0xFFFF);
+    font_fill_rect_bottom(0, bar_y, fill_w, FB_BOTTOM_H, 0xFFFF);
 }
