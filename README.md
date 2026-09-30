@@ -1,4 +1,4 @@
-# Lynx 3DS
+# Lynx 3DS Modified
 
 A beautiful text-mode web browser for the 3DS, ported from Lynx... With image support!
 
@@ -25,4 +25,4 @@ A beautiful text-mode web browser for the 3DS, ported from Lynx... With image su
 
 ## AI Disclosure:
 
-Code was built with the assistance of Claude LLM. Everything else (Art, UI, and sound assets, etc) are my own, not AI. Lynx, and Open Sans are not mine.
+Code was built with the assistance of CoPilot, ChatGPT, and Claude LLM. Everything else (Art, UI, and sound assets, etc) are my own (PeterWarrington, https://github.com/PeterWarrington), not AI. Lynx, and Open Sans are not mine.
